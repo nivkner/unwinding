@@ -3,6 +3,7 @@
 #![feature(naked_functions)]
 #![feature(asm)]
 #![feature(asm_const)]
+#![feature(linkage)]
 #![cfg_attr(
     any(feature = "personality", feature = "personality-dummy"),
     feature(lang_items)

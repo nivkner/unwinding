@@ -166,3 +166,14 @@ pub unsafe extern "C" fn restore_context(ctx: &Context) -> ! {
         asm!(concat!(restore_regs!(gp), "bx lr"), options(noreturn));
     }
 }
+
+/// dummy function to avoid linker complaint
+#[no_mangle]
+#[linkage = "weak"]
+pub unsafe extern "C-unwind" fn __aeabi_unwind_cpp_pr0() {}
+#[no_mangle]
+#[linkage = "weak"]
+pub unsafe extern "C-unwind" fn __aeabi_unwind_cpp_pr1() {}
+#[no_mangle]
+#[linkage = "weak"]
+pub unsafe extern "C-unwind" fn __aeabi_unwind_cpp_pr2() {}
