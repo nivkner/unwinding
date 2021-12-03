@@ -101,6 +101,43 @@ macro_rules! save_regs {
     };
 }
 
+macro_rules! restore_regs {
+    (gp) => {
+        "
+        ldr r4, [r0, 0x4*4]
+        ldr r5, [r0, 0x4*5]
+        ldr r6, [r0, 0x4*6]
+        ldr r7, [r0, 0x4*7]
+        ldr r8, [r0, 0x4*8]
+        ldr r9, [r0, 0x4*9]
+        ldr r10, [r0, 0x4*10]
+        ldr r11, [r0, 0x4*11]
+        ldr r13, [r0, 0x4*13]
+        ldr r14, [r0, 0x4*14]
+        "
+    };
+    (fp) => {
+        "
+        vldr s16, [r0, 0x4*({fp_offset}+16)]
+        vldr s17, [r0, 0x4*({fp_offset}+17)]
+        vldr s18, [r0, 0x4*({fp_offset}+18)]
+        vldr s19, [r0, 0x4*({fp_offset}+19)]
+        vldr s20, [r0, 0x4*({fp_offset}+20)]
+        vldr s21, [r0, 0x4*({fp_offset}+21)]
+        vldr s22, [r0, 0x4*({fp_offset}+22)]
+        vldr s23, [r0, 0x4*({fp_offset}+23)]
+        vldr s24, [r0, 0x4*({fp_offset}+24)]
+        vldr s25, [r0, 0x4*({fp_offset}+25)]
+        vldr s26, [r0, 0x4*({fp_offset}+26)]
+        vldr s27, [r0, 0x4*({fp_offset}+27)]
+        vldr s28, [r0, 0x4*({fp_offset}+28)]
+        vldr s29, [r0, 0x4*({fp_offset}+29)]
+        vldr s30, [r0, 0x4*({fp_offset}+30)]
+        vldr s31, [r0, 0x4*({fp_offset}+31)]
+        "
+    };
+}
+
 #[naked]
 pub extern "C-unwind" fn save_context() -> Context {
     // No need to save caller-saved registers here.
@@ -119,15 +156,13 @@ pub extern "C-unwind" fn save_context() -> Context {
 #[naked]
 pub unsafe extern "C" fn restore_context(ctx: &Context) -> ! {
     unsafe {
-        // use: `ldr dest, [src, index]`
-        // to load values of a register from the context
-        // load everything, even the registers that were not saved
-        // the arg containing the address to the context is stored in r0
+        #[cfg(target_feature = "vfp2")]
         asm!(
-            "
-            ret
-            ",
+            concat!(restore_regs!(gp), restore_regs!(fp), "bx lr"),
+            fp_offset = const GP_REGS,
             options(noreturn)
         );
+        #[cfg(not(target_feature = "vfp2"))]
+        asm!(concat!(restore_regs!(gp), "bx lr"), options(noreturn));
     }
 }
