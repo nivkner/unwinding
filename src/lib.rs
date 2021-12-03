@@ -2,6 +2,7 @@
 #![feature(c_unwind)]
 #![feature(naked_functions)]
 #![feature(asm)]
+#![feature(asm_const)]
 #![cfg_attr(
     any(feature = "personality", feature = "personality-dummy"),
     feature(lang_items)

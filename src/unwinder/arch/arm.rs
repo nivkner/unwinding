@@ -64,19 +64,55 @@ impl ops::IndexMut<gimli::Register> for Context {
     }
 }
 
+macro_rules! save_regs {
+    (gp) => {
+        "
+        str r4, [r0, 0x4*4]
+        str r5, [r0, 0x4*5]
+        str r6, [r0, 0x4*6]
+        str r7, [r0, 0x4*7]
+        str r8, [r0, 0x4*8]
+        str r9, [r0, 0x4*9]
+        str r10, [r0, 0x4*10]
+        str r11, [r0, 0x4*11]
+        str r13, [r0, 0x4*13]
+        str r14, [r0, 0x4*14]
+        "
+    };
+    (fp) => {
+        "
+        vstr s16, [r0, 0x4*({fp_offset}+16)]
+        vstr s17, [r0, 0x4*({fp_offset}+17)]
+        vstr s18, [r0, 0x4*({fp_offset}+18)]
+        vstr s19, [r0, 0x4*({fp_offset}+19)]
+        vstr s20, [r0, 0x4*({fp_offset}+20)]
+        vstr s21, [r0, 0x4*({fp_offset}+21)]
+        vstr s22, [r0, 0x4*({fp_offset}+22)]
+        vstr s23, [r0, 0x4*({fp_offset}+23)]
+        vstr s24, [r0, 0x4*({fp_offset}+24)]
+        vstr s25, [r0, 0x4*({fp_offset}+25)]
+        vstr s26, [r0, 0x4*({fp_offset}+26)]
+        vstr s27, [r0, 0x4*({fp_offset}+27)]
+        vstr s28, [r0, 0x4*({fp_offset}+28)]
+        vstr s29, [r0, 0x4*({fp_offset}+29)]
+        vstr s30, [r0, 0x4*({fp_offset}+30)]
+        vstr s31, [r0, 0x4*({fp_offset}+31)]
+        "
+    };
+}
+
 #[naked]
 pub extern "C-unwind" fn save_context() -> Context {
     // No need to save caller-saved registers here.
     unsafe {
-        // use: `str src, [dest, index]`
-        // to store values of a register into the context
-        // the address of the preallocated stack space is stored in r0
+        #[cfg(target_feature = "vfp2")]
         asm!(
-            "
-            ret
-            ",
+            concat!(save_regs!(gp), save_regs!(fp), "bx lr"),
+            fp_offset = const GP_REGS,
             options(noreturn)
         );
+        #[cfg(not(target_feature = "vfp2"))]
+        asm!(concat!(save_regs!(gp), "bx lr"), options(noreturn));
     }
 }
 
